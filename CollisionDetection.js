@@ -5,7 +5,7 @@ var container, scene, camera, renderer;
 			var helper;
 			var box;
 
-			var viewBB=1; // Hacer los boundingBox vicibles
+			var viewBB=0; // Hacer los boundingBox vicibles
 
 			var MovingCube;
 			var collidableMeshList = [];
