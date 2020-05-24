@@ -2,8 +2,8 @@ let container, scene, camera, renderer;
 let keyboard = new THREEx.KeyboardState();
 let clock = new THREE.Clock();
 let moveDistance;
-let helper;
-let box;
+let helper, helperWall, helperWall2;
+let box, boxWall, boxWall2;
 
 let viewBB = false; // Hacer los boundingBox visibles
 
@@ -70,8 +70,8 @@ function init() {
     // CUSTOM //
     ////////////
 
-    var cubeGeometry = new THREE.CubeGeometry(50, 50, 50, 1, 1, 1);
-    var wireMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+    let cubeGeometry = new THREE.CubeGeometry(50, 50, 50, 1, 1, 1);
+    let wireMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
 
     //MovingCube = new THREE.Mesh( cubeGeometry, wireMaterial );
     MovingCube = new THREE.Mesh(
@@ -94,53 +94,48 @@ function init() {
 
 
 
-    var wallGeometry = new THREE.CubeGeometry(100, 100, 20, 1, 1, 1); //SphereGeometry( 100, 10, 10 );
-    var wallMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff });
-    var wireMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true });
+    let wallGeometry = new THREE.CubeGeometry(100, 100, 20, 1, 1, 1); //SphereGeometry( 100, 10, 10 );
+    let wallMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+    wireMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true });
 
 
 
-    var wall = new THREE.Mesh(new THREE.SphereBufferGeometry(50, 32, 32), wallMaterial);
+    let wall = new THREE.Mesh(new THREE.SphereBufferGeometry(50, 32, 32), wallMaterial);
     wall.position.set(100, 50, -100);
-    //wall.geometry.computeBoundingBox();
+    wall.geometry.computeBoundingBox();
     wall.userData.id = "Wall1";
     wall.userData.tangible = 1;
     scene.add(wall);
     collidableMeshList.push(wall);
 
-    var wall = new THREE.Mesh(new THREE.SphereBufferGeometry(50, 32, 32), wireMaterial);
+    wall = new THREE.Mesh(new THREE.SphereBufferGeometry(50, 32, 32), wireMaterial);
     wall.position.set(100, 50, -100);
     scene.add(wall);
 
 
 
-    if (viewBB) {
-        var wall = new THREE.Mesh(
-            new THREE.CubeGeometry(100, 100, 100, 1, 1, 1),
-            new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true })
-        );
-        wall.position.set(100, 50, -100);
-        scene.add(wall);
-
-
-    }
+    /*var wall = new THREE.Mesh(
+        new THREE.CubeGeometry(100, 100, 100, 1, 1, 1),
+        new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true })
+    );
+    wall.position.set(100, 50, -100);
+    scene.add(wall);*/
 
 
 
 
 
-
-    var wall2 = new THREE.Mesh(wallGeometry, wallMaterial);
+    let wall2 = new THREE.Mesh(wallGeometry, wallMaterial);
     wall2.position.set(-150, 50, 0);
     wall2.rotation.y = 3.14159 / 2;
-    //wall2.geometry.computeBoundingBox();
+    wall2.geometry.computeBoundingBox();
     wall2.userData.id = "Wall2";
     wall2.userData.tangible = 1;
     scene.add(wall2);
     collidableMeshList.push(wall2);
 
 
-    var wall2 = new THREE.Mesh(wallGeometry, wireMaterial);
+    wall2 = new THREE.Mesh(wallGeometry, wireMaterial);
     wall2.position.set(-150, 50, 0);
     wall2.rotation.y = 3.14159 / 2;
     scene.add(wall2);
@@ -151,7 +146,7 @@ function init() {
 
 function changeTangible(txt) {
 
-    for (var i = 0; i < collidableMeshList.length; i++) {
+    for (let i = 0; i < collidableMeshList.length; i++) {
 
         if (collidableMeshList[i].userData.id == txt) {
             collidableMeshList[i].userData.tangible = !collidableMeshList[i].userData.tangible;
@@ -164,18 +159,18 @@ function changeTangible(txt) {
 }
 
 function detectCollisionCubes(object1, object2) {
-    object1.geometry.computeBoundingBox(); //not needed if its already calculated
-    object2.geometry.computeBoundingBox();
+    /*object1.geometry.computeBoundingBox(); //not needed if its already calculated
+    object2.geometry.computeBoundingBox();*/
     object1.updateMatrixWorld();
     object2.updateMatrixWorld();
 
-    var box1 = object1.geometry.boundingBox.clone();
-    box1.applyMatrix4(object1.matrixWorld);
+    let objBox1 = object1.geometry.boundingBox.clone();
+    objBox1.applyMatrix4(object1.matrixWorld);
 
-    var box2 = object2.geometry.boundingBox.clone();
-    box2.applyMatrix4(object2.matrixWorld);
+    let objBox2 = object2.geometry.boundingBox.clone();
+    objBox2.applyMatrix4(object2.matrixWorld);
 
-    return box1.intersectsBox(box2);
+    return objBox1.intersectsBox(objBox2);
 
 }
 
@@ -189,7 +184,7 @@ function collDetec(Cube) {
     //		for example, new THREE.CubeGeometry( 64, 64, 64, 8, 8, 8, wireMaterial )
     //   HOWEVER: when the origin of the ray is within the target mesh, collisions do not occur
 
-    var originPoint = Cube.position.clone();
+    let originPoint = Cube.position.clone();
 
 
 
@@ -198,7 +193,7 @@ function collDetec(Cube) {
 
     ////
 
-    for (var i = 0; i < collidableMeshList.length; i++) {
+    for (let i = 0; i < collidableMeshList.length; i++) {
         if (collidableMeshList[i].userData.tangible && detectCollisionCubes(Cube, collidableMeshList[i])) {
             return 1;
         }
@@ -212,11 +207,11 @@ function collDetec(Cube) {
 
 
 function update() {
-    var delta = clock.getDelta(); // seconds.
+    let delta = clock.getDelta(); // seconds.
     moveDistance = 200 * delta; // 200 pixels per second
-    var rotateAngle = Math.PI / 2 * delta; // pi/2 radians (90 degrees) per second
+    let rotateAngle = Math.PI / 2 * delta; // pi/2 radians (90 degrees) per second
 
-    var cCube = MovingCube.clone();
+    let cCube = MovingCube.clone();
 
 
 
