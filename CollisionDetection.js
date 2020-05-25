@@ -7,14 +7,14 @@ let box, boxWall, boxWall2;
 
 let viewBB = false; // Hacer los boundingBox visibles
 
-let MovingCube;
+let MovingCube, wall, wall2;
 let collidableMeshList = [];
 
 let arrowList = [];
 let directionList = [];
 
 init();
-//changeTangible("Wall1");
+//changeTangible("Wall1"); //
 animate();
 
 function init() {
@@ -42,9 +42,6 @@ function init() {
     document.body.appendChild(renderer.domElement);
 
 
-
-
-
     // LIGHT
     let light = new THREE.PointLight(0xffffff);
     light.position.set(0, 250, 0);
@@ -70,10 +67,7 @@ function init() {
     // CUSTOM //
     ////////////
 
-    let cubeGeometry = new THREE.CubeGeometry(50, 50, 50, 1, 1, 1);
-    let wireMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
-
-    //MovingCube = new THREE.Mesh( cubeGeometry, wireMaterial );
+    //Avatar
     MovingCube = new THREE.Mesh(
         new THREE.SphereBufferGeometry(25, 32, 32),
         new THREE.MeshBasicMaterial()
@@ -91,16 +85,17 @@ function init() {
     helper.visible = viewBB;
 
 
-
-
-
-    let wallGeometry = new THREE.CubeGeometry(100, 100, 20, 1, 1, 1); //SphereGeometry( 100, 10, 10 );
+    //Wall
+    let wallGeometry = new THREE.CubeGeometry(100, 100, 20, 1, 1, 1);
     let wallMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff });
-    wireMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true });
+    let wireMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true });
+
+    wall = new THREE.Mesh(new THREE.SphereBufferGeometry(50, 32, 32), wireMaterial);
+    wall.position.set(100, 50, -100);
+    scene.add(wall);
 
 
-
-    let wall = new THREE.Mesh(new THREE.SphereBufferGeometry(50, 32, 32), wallMaterial);
+    wall = new THREE.Mesh(new THREE.SphereBufferGeometry(50, 32, 32), wallMaterial);
     wall.position.set(100, 50, -100);
     wall.geometry.computeBoundingBox();
     wall.userData.id = "Wall1";
@@ -108,24 +103,23 @@ function init() {
     scene.add(wall);
     collidableMeshList.push(wall);
 
-    wall = new THREE.Mesh(new THREE.SphereBufferGeometry(50, 32, 32), wireMaterial);
-    wall.position.set(100, 50, -100);
-    scene.add(wall);
+
+    boxWall = new THREE.Box3();
+    boxWall.copy(wall.geometry.boundingBox).applyMatrix4(wall.matrixWorld);
+    helperWall = new THREE.Box3Helper(boxWall, 0xffff00);
+    scene.add(helperWall);
+
+    helperWall.visible = viewBB;
 
 
-
-    /*var wall = new THREE.Mesh(
-        new THREE.CubeGeometry(100, 100, 100, 1, 1, 1),
-        new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true })
-    );
-    wall.position.set(100, 50, -100);
-    scene.add(wall);*/
+    //Wall2
+    wall2 = new THREE.Mesh(wallGeometry, wireMaterial);
+    wall2.position.set(-150, 50, 0);
+    wall2.rotation.y = 3.14159 / 2;
+    scene.add(wall2);
 
 
-
-
-
-    let wall2 = new THREE.Mesh(wallGeometry, wallMaterial);
+    wall2 = new THREE.Mesh(wallGeometry, wallMaterial);
     wall2.position.set(-150, 50, 0);
     wall2.rotation.y = 3.14159 / 2;
     wall2.geometry.computeBoundingBox();
@@ -134,11 +128,12 @@ function init() {
     scene.add(wall2);
     collidableMeshList.push(wall2);
 
+    boxWall2 = new THREE.Box3();
+    boxWall2.copy(wall2.geometry.boundingBox).applyMatrix4(wall2.matrixWorld);
+    helperWall2 = new THREE.Box3Helper(boxWall2, 0xffff00);
+    scene.add(helperWall2);
 
-    wall2 = new THREE.Mesh(wallGeometry, wireMaterial);
-    wall2.position.set(-150, 50, 0);
-    wall2.rotation.y = 3.14159 / 2;
-    scene.add(wall2);
+    helperWall2.visible = viewBB;
 
 
 }
@@ -159,8 +154,7 @@ function changeTangible(txt) {
 }
 
 function detectCollisionCubes(object1, object2) {
-    /*object1.geometry.computeBoundingBox(); //not needed if its already calculated
-    object2.geometry.computeBoundingBox();*/
+
     object1.updateMatrixWorld();
     object2.updateMatrixWorld();
 
@@ -176,28 +170,14 @@ function detectCollisionCubes(object1, object2) {
 
 
 
-function collDetec(Cube) {
-    // collision detection:
-    //   determines if any of the rays from the cube's origin to each vertex
-    //		intersects any face of a mesh in the array of target meshes
-    //   for increased collision accuracy, add more vertices to the cube;
-    //		for example, new THREE.CubeGeometry( 64, 64, 64, 8, 8, 8, wireMaterial )
-    //   HOWEVER: when the origin of the ray is within the target mesh, collisions do not occur
+function collDetec(Cube) { // collision detection
 
     let originPoint = Cube.position.clone();
-
-
-
-
-
-
-    ////
 
     for (let i = 0; i < collidableMeshList.length; i++) {
         if (collidableMeshList[i].userData.tangible && detectCollisionCubes(Cube, collidableMeshList[i])) {
             return 1;
         }
-
     }
     return 0;
 
@@ -214,57 +194,29 @@ function update() {
     let cCube = MovingCube.clone();
 
 
-
     if (keyboard.pressed("A"))
         MovingCube.rotation.y += rotateAngle;
     if (keyboard.pressed("D"))
         MovingCube.rotation.y -= rotateAngle;
 
 
-
     if (keyboard.pressed("left")) {
-
-        cCube.position.x -= moveDistance; //+ 45;
-
-
+        cCube.position.x -= moveDistance;
         if (!collDetec(cCube)) { MovingCube.position.x -= moveDistance; }
-
-
-
     }
-
     if (keyboard.pressed("right")) {
-
-        cCube.position.x += moveDistance; //+ 45;
-
-
+        cCube.position.x += moveDistance;
         if (!collDetec(cCube)) { MovingCube.position.x += moveDistance; }
-
-
     }
     if (keyboard.pressed("up")) {
-
-        cCube.position.z -= moveDistance; //+ 45;
-
-
+        cCube.position.z -= moveDistance;
         if (!collDetec(cCube)) { MovingCube.position.z -= moveDistance; }
-
     }
     if (keyboard.pressed("down")) {
-
-        cCube.position.z += moveDistance; //+ 45;
-
-
+        cCube.position.z += moveDistance;
         if (!collDetec(cCube)) { MovingCube.position.z += moveDistance; }
-
     }
     cCube = MovingCube.clone();
-
-
-
-    //controls.update();
-    //stats.update();	
-
 
 }
 
@@ -272,6 +224,8 @@ function animate() {
 
     requestAnimationFrame(animate);
     box.copy(MovingCube.geometry.boundingBox).applyMatrix4(MovingCube.matrixWorld);
+    boxWall.copy(wall.geometry.boundingBox).applyMatrix4(wall.matrixWorld);
+    boxWall2.copy(wall2.geometry.boundingBox).applyMatrix4(wall2.matrixWorld);
     render();
     update();
 }
